@@ -646,6 +646,7 @@ class DataFetcherManager:
         "FutuFetcher": {"hk"},
         "FinnhubFetcher": {"us"},
         "AlphaVantageFetcher": {"us"},
+        "OpenBBFetcher": {"cn"},
     }
     _daily_source_health = CircuitBreaker(failure_threshold=3, cooldown_seconds=300.0)
     _CN_INDEX_DAILY_SOURCE_ORDER = (
@@ -1886,6 +1887,15 @@ class DataFetcherManager:
             optional_fetchers.append(AlphaVantageFetcher())
         else:
             logger.debug("[数据源初始化] 跳过未配置的 AlphaVantageFetcher")
+
+        openbb_api_url = (getattr(config, "openbb_api_url", None) or "").strip()
+        if openbb_api_url:
+            from .openbb_fetcher import OpenBBFetcher
+            optional_fetchers.append(
+                OpenBBFetcher(priority=getattr(config, "openbb_priority", None))
+            )
+        else:
+            logger.debug("[数据源初始化] 跳过未配置的 OpenBBFetcher")
 
         # 初始化数据源列表
         self._ensure_concurrency_guards()

@@ -999,6 +999,11 @@ class Config:
     mx_priority: int = 6
     finnhub_api_key: Optional[str] = None
     alphavantage_api_key: Optional[str] = None
+    openbb_api_url: Optional[str] = None
+    openbb_api_user: Optional[str] = None
+    openbb_api_password: Optional[str] = None
+    openbb_providers: Optional[str] = None
+    openbb_priority: Optional[int] = 6
     longbridge_app_key: Optional[str] = None
     longbridge_app_secret: Optional[str] = None
     longbridge_access_token: Optional[str] = None
@@ -1945,6 +1950,11 @@ class Config:
             mx_priority=parse_env_int(os.getenv('MX_PRIORITY'), 6, field_name='MX_PRIORITY', minimum=0),
             finnhub_api_key=os.getenv('FINNHUB_API_KEY') or None,
             alphavantage_api_key=os.getenv('ALPHAVANTAGE_API_KEY') or None,
+            openbb_api_url=os.getenv('OPENBB_API_URL') or None,
+            openbb_api_user=os.getenv('OPENBB_API_USER') or None,
+            openbb_api_password=os.getenv('OPENBB_API_PASSWORD') or None,
+            openbb_providers=os.getenv('OPENBB_PROVIDERS') or None,
+            openbb_priority=parse_env_int(os.getenv('OPENBB_PRIORITY'), 6, field_name='OPENBB_PRIORITY', minimum=0),
             longbridge_app_key=os.getenv('LONGBRIDGE_APP_KEY') or None,
             longbridge_app_secret=os.getenv('LONGBRIDGE_APP_SECRET') or None,
             longbridge_access_token=os.getenv('LONGBRIDGE_ACCESS_TOKEN') or None,
