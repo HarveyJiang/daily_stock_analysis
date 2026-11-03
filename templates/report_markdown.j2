@@ -149,6 +149,33 @@
 
 {% endif %}
 
+{% set forecast = dashboard.get('next_day_return_forecast') or {} %}
+{% if forecast %}
+### {% if report_language == 'en' %}Next-trading-day return range{% else %}下一交易日涨跌幅区间{% endif %}
+
+{% if forecast.get('status') == 'available' and forecast.get('lower_pct') is number and forecast.get('upper_pct') is number %}
+- {% if report_language == 'en' %}Estimated range{% else %}估计区间{% endif %}: {{ '%.2f%%' | format(forecast.get('lower_pct')) }} to {{ '%.2f%%' | format(forecast.get('upper_pct')) }}{% if forecast.get('reference_price') is number %} ({% if report_language == 'en' %}reference price{% else %}基准价{% endif %} {{ forecast.get('reference_price') }}){% endif %}
+{% else %}
+- {% if report_language == 'en' %}Unavailable{% else %}暂无可靠区间{% endif %}
+{% endif %}
+{% if forecast.get('trading_date') %}- {% if report_language == 'en' %}Target date{% else %}目标交易日{% endif %}: {{ forecast.get('trading_date') }}{% endif %}
+{% if forecast.get('confidence_level') %}- {% if report_language == 'en' %}Confidence{% else %}置信度{% endif %}: {{ forecast.get('confidence_level') }}{% endif %}
+{% if forecast.get('rationale') %}- {% if report_language == 'en' %}Basis{% else %}依据{% endif %}: {{ forecast.get('rationale') }}{% endif %}
+{% for limitation in forecast.get('data_limitations') or [] %}- {% if report_language == 'en' %}Limitation{% else %}限制{% endif %}: {{ limitation }}{% endfor %}
+
+{% endif %}
+
+{% set pillars = dashboard.get('four_pillar_attribution') or {} %}
+{% if pillars %}
+### {% if report_language == 'en' %}Four-pillar attribution{% else %}政策 / 国际 / 行业 / 资金归因{% endif %}
+
+{% for key, label_zh, label_en in [('policy', '政策面', 'Policy'), ('international', '国际形势', 'International'), ('industry', '行业趋势', 'Industry'), ('fund_flow', '资金博弈', 'Fund flow')] %}
+{% set pillar = pillars.get(key) or {} %}
+- {% if report_language == 'en' %}{{ label_en }}{% else %}{{ label_zh }}{% endif %}: {{ pillar.get('direction') or 'unknown' }}{% if pillar.get('evidence') %} — {{ pillar.get('evidence') }}{% endif %}
+{% endfor %}
+
+{% endif %}
+
 {% set signal_attr = dashboard.get('signal_attribution') or {} %}
 {% set signal_attr_weights = signal_attribution_weight_items(signal_attr) %}
 {% if signal_attribution_has_content(signal_attr) %}

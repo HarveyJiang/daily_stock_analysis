@@ -1081,6 +1081,8 @@ P5 在个股分析报告的 `dashboard.phase_decision` 中追加阶段化决策�
 
 Issue #1742 在个股分析报告的 `dashboard.signal_attribution` 中新增信号归因分析字段：`technical_indicators`、`news_sentiment`、`fundamentals`、`market_conditions`（四个贡献度；有效非零贡献度归一化到 100；全零表示无有效信号）、`strongest_bullish_signal` 和 `strongest_bearish_signal`。该字段解释推荐理由的构成，帮助用户理解 AI 决策的归因权重。
 
+新增的 `dashboard.next_day_return_forecast` 可选展示下一交易日涨跌幅估计区间，使用本次分析基准价并记录目标交易日、置信等级、依据与数据限制。它是模型估计，不代表结果承诺；基准价、交易日或证据不足时必须标记为 `unavailable`，区间值留空。`dashboard.four_pillar_attribution` 独立描述政策、国际形势、行业趋势和资金博弈，并分别附方向与证据；缺少证据时使用 `unknown` 并说明原因。它不替代既有的 `signal_attribution`。旧报告缺失新字段时仍按原样展示。
+
 信号归因分析在所有报告渲染路径中同步展示：
 - `generate_dashboard_report()`（默认通知报告）
 - `generate_single_stock_report()`（单股推送报告）

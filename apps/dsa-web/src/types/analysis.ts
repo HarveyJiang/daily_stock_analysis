@@ -361,6 +361,31 @@ export interface AnalysisContextPackOverview {
 }
 
 /** Details section */
+export type AttributionDirection = 'positive' | 'neutral' | 'negative' | 'unknown';
+
+export interface NextDayReturnForecast {
+  status?: 'available' | 'unavailable';
+  lowerPct?: number | null;
+  upperPct?: number | null;
+  referencePrice?: number | null;
+  tradingDate?: string | null;
+  confidenceLevel?: string | null;
+  rationale?: string | null;
+  dataLimitations?: string[];
+}
+
+export interface FourPillarAttributionItem {
+  direction?: AttributionDirection;
+  evidence?: string | null;
+}
+
+export interface FourPillarAttribution {
+  policy?: FourPillarAttributionItem;
+  international?: FourPillarAttributionItem;
+  industry?: FourPillarAttributionItem;
+  fundFlow?: FourPillarAttributionItem;
+}
+
 export interface ReportDetails {
   newsContent?: string;
   emptyNewsDisclosure?: string;

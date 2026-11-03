@@ -3,6 +3,8 @@ import type {
   ReportDetails as ReportDetailsType,
   ReportMeta,
   ReportSummary as ReportSummaryType,
+  NextDayReturnForecast,
+  FourPillarAttribution,
 } from '../../types/analysis';
 import { Badge, Button, Card, ScoreGauge } from '../common';
 import { formatDateTime } from '../../utils/format';
@@ -179,6 +181,28 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
     .filter((board) => normalizeBoardName(board?.name).length > 0);
   const boardSignals = buildBoardSignalMaps(details);
   const preparedRelatedBoards = buildPreparedRelatedBoards(relatedBoards, boardSignals);
+  const rawDashboard = details?.rawResult?.dashboard;
+  const dashboard = rawDashboard && typeof rawDashboard === 'object'
+    ? rawDashboard as {
+      nextDayReturnForecast?: NextDayReturnForecast;
+      fourPillarAttribution?: FourPillarAttribution;
+    }
+    : {};
+  const returnForecast = dashboard.nextDayReturnForecast;
+  const fourPillarAttribution = dashboard.fourPillarAttribution;
+  const hasValidForecast = returnForecast?.status === 'available'
+    && typeof returnForecast.lowerPct === 'number'
+    && Number.isFinite(returnForecast.lowerPct)
+    && typeof returnForecast.upperPct === 'number'
+    && Number.isFinite(returnForecast.upperPct)
+    && returnForecast.lowerPct <= returnForecast.upperPct;
+  const attributionPillars = [
+    { key: 'policy', zh: '政策面', en: 'Policy', value: fourPillarAttribution?.policy },
+    { key: 'international', zh: '国际形势', en: 'International', value: fourPillarAttribution?.international },
+    { key: 'industry', zh: '行业趋势', en: 'Industry', value: fourPillarAttribution?.industry },
+    { key: 'fund_flow', zh: '资金博弈', en: 'Fund flow', value: fourPillarAttribution?.fundFlow },
+  ];
+  const hasFourPillarAttribution = attributionPillars.some(({ value }) => value);
 
   const getPriceChangeStyle = (changePct: number | undefined): React.CSSProperties | undefined => {
     if (changePct === undefined || changePct === null) {
@@ -375,6 +399,60 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
                   {preparedRelatedBoards.map(renderBoardChip)}
                 </div>
               </section>
+            </Card>
+          )}
+
+          {(returnForecast || hasFourPillarAttribution) && (
+            <Card variant="bordered" padding="sm" className="home-panel-card min-w-0 max-w-full text-left">
+              <div className="space-y-4">
+                {returnForecast && (
+                  <section aria-label={reportLanguage === 'en' ? 'Next-trading-day return range' : '下一交易日涨跌幅区间'}>
+                    <h3 className="text-base font-semibold text-foreground">
+                      {reportLanguage === 'en' ? 'Next-trading-day return range' : '下一交易日涨跌幅区间'}
+                    </h3>
+                    <p className="mt-2 text-lg font-semibold tabular-nums text-foreground">
+                      {hasValidForecast
+                        ? `${returnForecast.lowerPct! > 0 ? '+' : ''}${returnForecast.lowerPct!.toFixed(2)}% – ${returnForecast.upperPct! > 0 ? '+' : ''}${returnForecast.upperPct!.toFixed(2)}%`
+                        : (reportLanguage === 'en' ? 'No reliable range available' : '暂无可靠区间')}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-text">
+                      {returnForecast.tradingDate && <span>{reportLanguage === 'en' ? 'Target date' : '目标交易日'}: {returnForecast.tradingDate}</span>}
+                      {typeof returnForecast.referencePrice === 'number' && Number.isFinite(returnForecast.referencePrice) && (
+                        <span>{reportLanguage === 'en' ? 'Reference' : '基准价'}: {returnForecast.referencePrice.toFixed(2)}</span>
+                      )}
+                      {returnForecast.confidenceLevel && <span>{reportLanguage === 'en' ? 'Confidence' : '置信度'}: {returnForecast.confidenceLevel}</span>}
+                    </div>
+                    {returnForecast.rationale && <p className="mt-2 text-sm leading-6 text-secondary-text">{returnForecast.rationale}</p>}
+                    {returnForecast.dataLimitations?.length ? (
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-muted-text">
+                        {returnForecast.dataLimitations.map((limitation, index) => <li key={`${index}-${limitation}`}>{limitation}</li>)}
+                      </ul>
+                    ) : null}
+                  </section>
+                )}
+                {hasFourPillarAttribution && (
+                  <section aria-label={reportLanguage === 'en' ? 'Four-pillar attribution' : '四维归因'}>
+                    <h3 className="text-base font-semibold text-foreground">
+                      {reportLanguage === 'en' ? 'Policy / international / industry / fund flow' : '政策 / 国际 / 行业 / 资金归因'}
+                    </h3>
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {attributionPillars.map(({ key, zh, en, value }) => value ? (
+                        <div key={key} className="min-w-0 rounded-lg bg-surface-subtle p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground">{reportLanguage === 'en' ? en : zh}</span>
+                            <Badge variant={value.direction === 'positive' ? 'success' : value.direction === 'negative' ? 'danger' : 'default'}>
+                              {reportLanguage === 'en'
+                                ? ({ positive: 'Positive', neutral: 'Neutral', negative: 'Negative', unknown: 'Unknown' } as const)[value.direction || 'unknown']
+                                : ({ positive: '偏正面', neutral: '中性', negative: '偏负面', unknown: '证据不足' } as const)[value.direction || 'unknown']}
+                            </Badge>
+                          </div>
+                          {value.evidence && <p className="mt-1.5 text-xs leading-5 text-secondary-text">{value.evidence}</p>}
+                        </div>
+                      ) : null)}
+                    </div>
+                  </section>
+                )}
+              </div>
             </Card>
           )}
         </div>

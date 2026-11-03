@@ -2050,6 +2050,22 @@ class GeminiAnalyzer:
             "data_limitations": ["阶段或数据质量限制1", "阶段或数据质量限制2"]
         },
 
+        "next_day_return_forecast": {
+            "status": "available/unavailable",
+            "lower_pct": "下一交易日相对本次分析基准价的涨跌幅区间下限；不可用时为null",
+            "upper_pct": "下一交易日相对本次分析基准价的涨跌幅区间上限；不可用时为null",
+            "reference_price": "用于计算涨跌幅的本次分析基准价格；缺失时为null",
+            "trading_date": "目标市场的下一交易日 YYYY-MM-DD；无法判断时为null",
+            "confidence_level": "高/中/低",
+            "rationale": "区间依据及主要假设",
+            "data_limitations": ["限制或证据缺口"]
+        },
+        "four_pillar_attribution": {
+            "policy": {"direction": "positive/neutral/negative/unknown", "evidence": "政策证据；无证据时说明未知"},
+            "international": {"direction": "positive/neutral/negative/unknown", "evidence": "国际形势证据；无证据时说明未知"},
+            "industry": {"direction": "positive/neutral/negative/unknown", "evidence": "行业趋势证据；无证据时说明未知"},
+            "fund_flow": {"direction": "positive/neutral/negative/unknown", "evidence": "资金博弈证据；无证据时说明未知"}
+        },
         "signal_attribution": {
             "technical_indicators": 技术指标贡献度(0-100),
             "news_sentiment": 新闻舆情贡献度(0-100),
@@ -2131,7 +2147,9 @@ class GeminiAnalyzer:
 - 只有在跌破关键支撑、主力资金持续流出或风险显著放大时，才能给出卖出/减仓。
 - 必须输出 `dashboard.phase_decision` 七字段；盘中/午休/临近收盘要给出当前动作、观察条件和下一次检查点。
 - 建议输出可选展示字段 `dashboard.signal_attribution` 六字段；解释推荐理由的构成，包括技术指标、新闻舆情、基本面、市场环境的贡献度，以及最强看多/看空信号。
-- 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。"""
+- 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。
+- `next_day_return_forecast` 是不确定性估计，不是承诺或精确预测；仅在有可核验价格基准和足够证据时给出有限数值区间，区间须满足 lower_pct <= upper_pct，注明目标下一交易日、基准价格和限制。数据不足、交易日无法确认或证据互相矛盾时必须设 `status=unavailable`、数值为 null 并解释原因，禁止用 0% 或编造日期/价格填充。
+- `four_pillar_attribution` 仅归纳输入中可追溯的政策、国际形势、行业趋势和资金博弈证据；缺少证据必须使用 `direction=unknown` 并说明缺口，不得把原有 `signal_attribution` 的四项贡献度映射或改名为这四维。"""
 
     SYSTEM_PROMPT = """你是一位{market_placeholder}投资分析师，负责生成专业的【决策仪表盘】分析报告。
 
@@ -2238,6 +2256,22 @@ class GeminiAnalyzer:
             "data_limitations": ["阶段或数据质量限制1", "阶段或数据质量限制2"]
         },
 
+        "next_day_return_forecast": {
+            "status": "available/unavailable",
+            "lower_pct": "下一交易日相对本次分析基准价的涨跌幅区间下限；不可用时为null",
+            "upper_pct": "下一交易日相对本次分析基准价的涨跌幅区间上限；不可用时为null",
+            "reference_price": "用于计算涨跌幅的本次分析基准价格；缺失时为null",
+            "trading_date": "目标市场的下一交易日 YYYY-MM-DD；无法判断时为null",
+            "confidence_level": "高/中/低",
+            "rationale": "区间依据及主要假设",
+            "data_limitations": ["限制或证据缺口"]
+        },
+        "four_pillar_attribution": {
+            "policy": {"direction": "positive/neutral/negative/unknown", "evidence": "政策证据；无证据时说明未知"},
+            "international": {"direction": "positive/neutral/negative/unknown", "evidence": "国际形势证据；无证据时说明未知"},
+            "industry": {"direction": "positive/neutral/negative/unknown", "evidence": "行业趋势证据；无证据时说明未知"},
+            "fund_flow": {"direction": "positive/neutral/negative/unknown", "evidence": "资金博弈证据；无证据时说明未知"}
+        },
         "signal_attribution": {
             "technical_indicators": 技术指标贡献度(0-100),
             "news_sentiment": 新闻舆情贡献度(0-100),
@@ -2317,7 +2351,9 @@ class GeminiAnalyzer:
 - 只有在跌破关键支撑、主力资金持续流出或风险显著放大时，才能给出卖出/减仓。
 - 必须输出 `dashboard.phase_decision` 七字段；盘中/午休/临近收盘要给出当前动作、观察条件和下一次检查点。
 - 建议输出可选展示字段 `dashboard.signal_attribution` 六字段；解释推荐理由的构成，包括技术指标、新闻舆情、基本面、市场环境的贡献度，以及最强看多/看空信号。
-- 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。"""
+- 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。
+- `next_day_return_forecast` 是不确定性估计，不是承诺或精确预测；仅在有可核验价格基准和足够证据时给出有限数值区间，区间须满足 lower_pct <= upper_pct，注明目标下一交易日、基准价格和限制。数据不足、交易日无法确认或证据互相矛盾时必须设 `status=unavailable`、数值为 null 并解释原因，禁止用 0% 或编造日期/价格填充。
+- `four_pillar_attribution` 仅归纳输入中可追溯的政策、国际形势、行业趋势和资金博弈证据；缺少证据必须使用 `direction=unknown` 并说明缺口，不得把原有 `signal_attribution` 的四项贡献度映射或改名为这四维。"""
 
     # English templates (REPORT_LANGUAGE=en/ko). They mirror LEGACY_DEFAULT_SYSTEM_PROMPT /
     # SYSTEM_PROMPT section by section so smaller models are not biased toward Chinese output
@@ -2401,6 +2437,22 @@ Output strictly in the following JSON format. This is a complete Decision Dashbo
             "data_limitations": ["Phase or data-quality limitation 1", "Phase or data-quality limitation 2"]
         },
 
+        "next_day_return_forecast": {
+            "status": "available/unavailable",
+            "lower_pct": "Lower next-trading-day return bound (%) vs the analysis reference price, or null",
+            "upper_pct": "Upper next-trading-day return bound (%) vs the analysis reference price, or null",
+            "reference_price": "Analysis-time reference price, or null",
+            "trading_date": "Target market's next trading date YYYY-MM-DD, or null",
+            "confidence_level": "High/Medium/Low",
+            "rationale": "Evidence and assumptions behind the range",
+            "data_limitations": ["Known limitation or evidence gap"]
+        },
+        "four_pillar_attribution": {
+            "policy": {"direction": "positive/neutral/negative/unknown", "evidence": "Policy evidence or why unavailable"},
+            "international": {"direction": "positive/neutral/negative/unknown", "evidence": "International evidence or why unavailable"},
+            "industry": {"direction": "positive/neutral/negative/unknown", "evidence": "Industry evidence or why unavailable"},
+            "fund_flow": {"direction": "positive/neutral/negative/unknown", "evidence": "Fund-flow evidence or why unavailable"}
+        },
         "signal_attribution": {
             "technical_indicators": technical indicator contribution (0-100),
             "news_sentiment": news sentiment contribution (0-100),
@@ -2453,7 +2505,9 @@ Output strictly in the following JSON format. This is a complete Decision Dashbo
 - Only give Sell/Reduce after a break below key support, persistent main capital outflow, or a clear increase in risk.
 - `dashboard.phase_decision` must contain all seven fields; intraday, lunch break and near the close must give the current action, watch conditions and the next checkpoint.
 - The optional display field `dashboard.signal_attribution` (six fields) is recommended; explain what drives the recommendation, including the contribution of technical indicators, news sentiment, fundamentals and market conditions, and the strongest bullish/bearish signals.
-- Pre-market, on non-trading days or in an unknown phase, never fabricate today's intraday move; when quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated, `confidence_level` must not be High."""
+- Pre-market, on non-trading days or in an unknown phase, never fabricate today's intraday move; when quote/daily_bars/technical is stale, fallback, missing, fetch_failed, partial or estimated, `confidence_level` must not be High.
+- `next_day_return_forecast` is an uncertainty estimate, not a promise or precise prediction. Give finite bounds only with a verifiable reference price and sufficient evidence; require lower_pct <= upper_pct and state the target next trading date, reference price and limitations. If evidence or the trading date is insufficient, set status to unavailable, use null bounds and explain why; never fill gaps with 0% or invented values.
+- `four_pillar_attribution` must cite only supplied evidence for policy, international conditions, industry trends and fund flow. Use direction=unknown and explain the gap when evidence is missing; never rename or remap the legacy `signal_attribution` dimensions."""
 
     LEGACY_DEFAULT_SYSTEM_PROMPT_EN = """You are a trend-trading focused {market_placeholder} analyst responsible for producing a professional Decision Dashboard analysis report.
 

@@ -951,6 +951,8 @@ Regular analysis and Agent analysis now apply lightweight guardrails before hist
 
 Issue #1742 adds a signal attribution analysis block under `dashboard.signal_attribution` for individual stock analysis reports: `technical_indicators`, `news_sentiment`, `fundamentals`, `market_conditions` (four contribution values; valid non-zero values are normalized to 100; all-zero means no effective signal), `strongest_bullish_signal`, and `strongest_bearish_signal`. This field explains the composition of recommendation reasons, helping users understand the attribution weights of AI decisions.
 
+The optional `dashboard.next_day_return_forecast` displays an estimated next-trading-day return range against the analysis-time reference price, together with the target date, confidence level, rationale, and data limitations. It is an estimate, not a promised outcome. If the reference price, trading date, or evidence is insufficient, the forecast must be marked `unavailable` with empty bounds. The separate `dashboard.four_pillar_attribution` describes policy, international conditions, industry trends, and fund flow, with a direction and evidence for each; use `unknown` and explain the gap when evidence is unavailable. It does not replace the legacy `signal_attribution`. Historical reports without these fields remain valid.
+
 Signal attribution analysis is rendered in all report paths:
 - `generate_dashboard_report()` (default notification report)
 - `generate_single_stock_report()` (single-stock push report)

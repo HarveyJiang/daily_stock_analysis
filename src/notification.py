@@ -1530,6 +1530,44 @@ class NotificationService(
                             report_lines.append(f"- {item}")
                         report_lines.append("")
 
+                # ========== 次日预测区间与四维归因 ==========
+                forecast = dashboard.get('next_day_return_forecast', {}) if dashboard else {}
+                if isinstance(forecast, dict) and forecast:
+                    report_lines.extend([f"### {'Next-trading-day return range' if report_language == 'en' else '下一交易日涨跌幅区间'}", ""])
+                    lower = forecast.get('lower_pct')
+                    upper = forecast.get('upper_pct')
+                    if forecast.get('status') == 'available' and isinstance(lower, (int, float)) and isinstance(upper, (int, float)):
+                        report_lines.append(f"- {'Estimated range' if report_language == 'en' else '估计区间'}: {lower:.2f}% to {upper:.2f}%" if report_language == 'en' else f"- 估计区间: {lower:.2f}% 至 {upper:.2f}%")
+                    else:
+                        report_lines.append(f"- {'Unavailable' if report_language == 'en' else '暂无可靠区间'}")
+                    if forecast.get('trading_date'):
+                        report_lines.append(f"- {'Target date' if report_language == 'en' else '目标交易日'}: {forecast['trading_date']}")
+                    if forecast.get('confidence_level'):
+                        report_lines.append(f"- {'Confidence' if report_language == 'en' else '置信度'}: {forecast['confidence_level']}")
+                    if forecast.get('rationale'):
+                        report_lines.append(f"- {'Basis' if report_language == 'en' else '依据'}: {forecast['rationale']}")
+                    for limitation in forecast.get('data_limitations') or []:
+                        report_lines.append(f"- {'Limitation' if report_language == 'en' else '限制'}: {limitation}")
+                    report_lines.append("")
+
+                pillars = dashboard.get('four_pillar_attribution', {}) if dashboard else {}
+                if isinstance(pillars, dict) and pillars:
+                    report_lines.extend([f"### {'Four-pillar attribution' if report_language == 'en' else '政策 / 国际 / 行业 / 资金归因'}", ""])
+                    pillar_labels = {
+                        'policy': ('Policy', '政策面'),
+                        'international': ('International', '国际形势'),
+                        'industry': ('Industry', '行业趋势'),
+                        'fund_flow': ('Fund flow', '资金博弈'),
+                    }
+                    for key, (label_en, label_zh) in pillar_labels.items():
+                        pillar = pillars.get(key) or {}
+                        if isinstance(pillar, dict):
+                            label = label_en if report_language == 'en' else label_zh
+                            direction = pillar.get('direction') or 'unknown'
+                            evidence = pillar.get('evidence')
+                            report_lines.append(f"- {label}: {direction}" + (f" — {evidence}" if evidence else ""))
+                    report_lines.append("")
+
                 # ========== 信号归因分析 ==========
                 signal_attr = dashboard.get('signal_attribution', {}) if dashboard else {}
                 if signal_attribution_has_content(signal_attr):

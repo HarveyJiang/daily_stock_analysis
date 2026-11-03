@@ -345,6 +345,9 @@ class Dashboard(BaseModel):
     battle_plan: Optional[BattlePlan] = None
     phase_decision: Optional[PhaseDecision] = None
     signal_attribution: Optional[SignalAttribution] = None
+    # New opt-in report fields; historical reports remain valid without them.
+    next_day_return_forecast: Optional[Dict[str, Any]] = None
+    four_pillar_attribution: Optional[Dict[str, Any]] = None
     agent_disagreement_explanation: Optional[AgentDisagreementExplanation] = None
 
 

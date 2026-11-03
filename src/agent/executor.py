@@ -150,6 +150,22 @@ LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{mar
             "confidence_reason": "置信度理由，说明阶段和数据质量限制",
             "data_limitations": ["阶段或数据质量限制1", "阶段或数据质量限制2"]
         }},
+        "next_day_return_forecast": {{
+            "status": "available/unavailable",
+            "lower_pct": "Lower next-trading-day return bound (%) vs reference price, or null",
+            "upper_pct": "Upper next-trading-day return bound (%) vs reference price, or null",
+            "reference_price": "Analysis-time reference price, or null",
+            "trading_date": "Target market's next trading date YYYY-MM-DD, or null",
+            "confidence_level": "高/中/低",
+            "rationale": "Evidence and assumptions for the range",
+            "data_limitations": ["Known limitation or evidence gap"]
+        }},
+        "four_pillar_attribution": {{
+            "policy": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}},
+            "international": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}},
+            "industry": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}},
+            "fund_flow": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}}
+        }},
         "signal_attribution": {{
             "technical_indicators": 技术指标贡献度(0-100；有效非零贡献度之和应为100；全零表示无有效信号),
             "news_sentiment": 新闻舆情贡献度(0-100；有效非零贡献度之和应为100；全零表示无有效信号),
@@ -223,6 +239,8 @@ LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{mar
 - 必须输出 `dashboard.phase_decision` 七字段；盘中/午休/临近收盘要给出当前动作、观察条件和下一次检查点。
 - 建议输出可选展示字段 `dashboard.signal_attribution` 六字段；解释推荐理由的构成，包括技术指标、新闻舆情、基本面、市场环境的贡献度，以及最强看多/看空信号。
 - 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。
+- `next_day_return_forecast` 是不确定性估计而非承诺。仅在基准价格和证据充分时输出有限区间，且 lower_pct <= upper_pct；注明目标下一交易日、基准价和限制。证据或日期不足时使用 status=unavailable、数值 null 并解释原因，禁止填 0% 或编造值。
+- `four_pillar_attribution` 只总结输入中可追溯的政策、国际、行业和资金证据；缺少证据时 direction=unknown 并说明原因。不得将旧 `signal_attribution` 维度冒充四维归因。
 
 {language_section}
 """
@@ -309,6 +327,22 @@ AGENT_SYSTEM_PROMPT = """你是一位{market_role}投资分析 Agent，拥有数
             "confidence_reason": "置信度理由，说明阶段和数据质量限制",
             "data_limitations": ["阶段或数据质量限制1", "阶段或数据质量限制2"]
         }},
+        "next_day_return_forecast": {{
+            "status": "available/unavailable",
+            "lower_pct": "Lower next-trading-day return bound (%) vs reference price, or null",
+            "upper_pct": "Upper next-trading-day return bound (%) vs reference price, or null",
+            "reference_price": "Analysis-time reference price, or null",
+            "trading_date": "Target market's next trading date YYYY-MM-DD, or null",
+            "confidence_level": "高/中/低",
+            "rationale": "Evidence and assumptions for the range",
+            "data_limitations": ["Known limitation or evidence gap"]
+        }},
+        "four_pillar_attribution": {{
+            "policy": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}},
+            "international": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}},
+            "industry": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}},
+            "fund_flow": {{"direction": "positive/neutral/negative/unknown", "evidence": "Evidence or why unavailable"}}
+        }},
         "signal_attribution": {{
             "technical_indicators": 技术指标贡献度(0-100；有效非零贡献度之和应为100；全零表示无有效信号),
             "news_sentiment": 新闻舆情贡献度(0-100；有效非零贡献度之和应为100；全零表示无有效信号),
@@ -379,6 +413,8 @@ AGENT_SYSTEM_PROMPT = """你是一位{market_role}投资分析 Agent，拥有数
 - 必须输出 `dashboard.phase_decision` 七字段；盘中/午休/临近收盘要给出当前动作、观察条件和下一次检查点。
 - 建议输出可选展示字段 `dashboard.signal_attribution` 六字段；解释推荐理由的构成，包括技术指标、新闻舆情、基本面、市场环境的贡献度，以及最强看多/看空信号。
 - 盘前、非交易日或未知阶段不得伪造今日盘中走势；quote/daily_bars/technical 存在 stale、fallback、missing、fetch_failed、partial 或 estimated 时，`confidence_level` 不得为高。
+- `next_day_return_forecast` 是不确定性估计而非承诺。仅在基准价格和证据充分时输出有限区间，且 lower_pct <= upper_pct；注明目标下一交易日、基准价和限制。证据或日期不足时使用 status=unavailable、数值 null 并解释原因，禁止填 0% 或编造值。
+- `four_pillar_attribution` 只总结输入中可追溯的政策、国际、行业和资金证据；缺少证据时 direction=unknown 并说明原因。不得将旧 `signal_attribution` 维度冒充四维归因。
 
 {language_section}
 """
